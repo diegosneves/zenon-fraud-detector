@@ -1,42 +1,23 @@
 package br.com.zenon;
 
 
-import br.com.zenon.enums.TransactionType;
-import br.com.zenon.factories.TransactionFactory;
+import br.com.zenon.fraud.Transaction;
+import br.com.zenon.fraud.TransactionIngestor;
+
+import java.util.List;
 
 public class Main {
 
     void main() {
 
-        var transacao1 = TransactionFactory.create(
-                1,
-                TransactionType.PAYMENT,
-                "100.0",
-                "C1231006815",
-                "1000.0",
-                "900.0",
-                "M1979787155",
-                "900.0",
-                "1000.0",
-                Boolean.FALSE,
-                Boolean.FALSE
-        );
+//        final var ingester = TransactionIngestor.create("data/PS_20174392719_1491204439457_log.csv");
+        final var ingester = TransactionIngestor.create("data/PS_20174392719_1491204439457_log.csv", 1_000);
 
-        var transacao2 = TransactionFactory.create(
-                654,
-                TransactionType.CASH_OUT,
-                100.0,
-                "C4331006815",
-                1000.0,
-                900.0,
-                "M2179787153",
-                900.0,
-                1000.0,
-                Boolean.FALSE,
-                Boolean.FALSE
-        );
+        List<Transaction> transactionRecords = ingester.getTransactions(10);
 
-        IO.println("\nTransação 1: %s, \n\nTransação 2: %s\n".formatted(transacao1, transacao2));
+        transactionRecords.forEach(IO::println);
+
+        IO.println("\n[%,03d] - Fraud transactions processed\n[%,03d] - Total found transactions".formatted(ingester.getTransactions().size(), transactionRecords.size()));
 
     }
 }
