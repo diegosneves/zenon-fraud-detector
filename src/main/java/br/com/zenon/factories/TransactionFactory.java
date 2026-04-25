@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 
 public final class TransactionFactory {
 
+    private static final String TRUE_STRING = "1";
+
     private TransactionFactory() {}
 
     public static Transaction create(
@@ -55,6 +57,30 @@ public final class TransactionFactory {
                 TransactionCustomer.of(nameDest, oldBalanceDest, newBalanceDest),
                 isFraud,
                 isFlaggedFraud
+        );
+    }
+
+    public static Transaction create(
+            final String step,
+            final String type,
+            final String amount,
+            final String nameOrig,
+            final String oldBalanceOrig,
+            final String newBalanceOrig,
+            final String nameDest,
+            final String oldBalanceDest,
+            final String newBalanceDest,
+            final String isFraud,
+            final String isFlaggedFraud
+    ) {
+        return Transaction.create(
+                Integer.valueOf(step),
+                TransactionType.valueOf(type),
+                new BigDecimal(amount),
+                TransactionCustomer.of(nameOrig, oldBalanceOrig, newBalanceOrig),
+                TransactionCustomer.of(nameDest, oldBalanceDest, newBalanceDest),
+                TRUE_STRING.equals(isFraud),
+                TRUE_STRING.equals(isFlaggedFraud)
         );
     }
 
