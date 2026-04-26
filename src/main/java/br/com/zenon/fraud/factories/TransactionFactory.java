@@ -1,4 +1,4 @@
-package br.com.zenon.factories;
+package br.com.zenon.fraud.factories;
 
 import br.com.zenon.enums.TransactionType;
 import br.com.zenon.fraud.Transaction;
@@ -83,5 +83,7 @@ public final class TransactionFactory {
                 TRUE_STRING.equals(isFlaggedFraud)
         );
     }
+
+
 
 }
