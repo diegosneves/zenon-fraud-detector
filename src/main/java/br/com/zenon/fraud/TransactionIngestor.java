@@ -1,6 +1,11 @@
 package br.com.zenon.fraud;
 
-import br.com.zenon.factories.TransactionFactory;
+import br.com.zenon.exceptions.ErrorDetail;
+import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
+import br.com.zenon.fraud.factories.TransactionFactory;
+import br.com.zenon.validations.TransacionIngestorValidator;
+import br.com.zenon.validations.handlers.NotificationHandler;
+import br.com.zenon.validations.handlers.ValidationHandler;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,8 +13,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TransactionIngestor {
+
+    private static final Logger logger = Logger.getLogger(TransactionIngestor.class.getName());
 
     private static final String DEFAULT_DELIMITER = ",";
 
@@ -40,14 +49,22 @@ public class TransactionIngestor {
                     .map(TransactionIngestor::parseTransaction)
                     .toList();
 
+        } catch (TransactionIngestorConstraintsException e) {
+            throw e;
         } catch (IOException e) {
-            throw new RuntimeException("Error reading file: " + fileName, e);
+            logger.log(Level.SEVERE, String.format("Error reading file: %s", fileName), e);
+            throw TransactionIngestorConstraintsException.with(ErrorDetail.of("Erro ao ler arquivo"));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, String.format("Unexpected error reading file: %s", fileName), e);
+            throw TransactionIngestorConstraintsException.with(ErrorDetail.of("Erro inesperado ao ler arquivo"));
         }
 
         return new TransactionIngestor(transactions);
     }
 
-    private static Transaction parseTransaction(String[] fields) {
+    private static Transaction parseTransaction(final String[] fields) {
+        validationFields(NotificationHandler.create(), fields);
+
         final String step = fields[0];
         final String type = fields[1];
         final String amount = fields[2];
@@ -73,6 +90,14 @@ public class TransactionIngestor {
                 isFraud,
                 isFlaggedFraud
         );
+    }
+
+    private static void validationFields(final ValidationHandler notification, final String[] fields) {
+        final var validator = TransacionIngestorValidator.of(notification, fields);
+        validator.validate();
+        if (notification.hasErrors()) {
+            throw TransactionIngestorConstraintsException.with(notification.getErrors());
+        }
     }
 
     public static TransactionIngestor create(final String fileName) {
