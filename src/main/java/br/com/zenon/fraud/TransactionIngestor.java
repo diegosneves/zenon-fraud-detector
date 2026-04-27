@@ -1,15 +1,25 @@
 package br.com.zenon.fraud;
 
-import br.com.zenon.factories.TransactionFactory;
+import br.com.zenon.exceptions.ErrorDetail;
+import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
+import br.com.zenon.fraud.factories.TransactionFactory;
+import br.com.zenon.validations.TransacionIngestorValidator;
+import br.com.zenon.validations.handlers.NotificationHandler;
+import br.com.zenon.validations.handlers.ValidationHandler;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TransactionIngestor {
+
+    private static final Logger logger = Logger.getLogger(TransactionIngestor.class.getName());
 
     private static final String DEFAULT_DELIMITER = ",";
 
@@ -20,6 +30,7 @@ public class TransactionIngestor {
     }
 
     public static TransactionIngestor create(
+            final ValidationHandler validationHandler,
             final String fileName,
             final String delimiter,
             final Boolean skipHeader,
@@ -37,17 +48,33 @@ public class TransactionIngestor {
                     .limit(limit == null ? fileContents.size() : limit)
                     .map(line -> line.trim().split(delimiter))
                     .filter(fields -> fields.length == 11)
-                    .map(TransactionIngestor::parseTransaction)
+                    .map(fields -> TransactionIngestor.parseTransaction(validationHandler, fields))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .toList();
 
         } catch (IOException e) {
-            throw new RuntimeException("Error reading file: " + fileName, e);
+            final var error = ErrorDetail.of("fileName", "Erro ao ler arquivo: %s".formatted(fileName), TransactionIngestor.class);
+            logger.log(Level.SEVERE, error.toString(), e);
+            throw TransactionIngestorConstraintsException.with(error);
+        } catch (Exception e) {
+            final var error = ErrorDetail.of("Erro inesperado ao ler arquivo: %s".formatted(fileName), TransactionIngestor.class);
+            logger.log(Level.SEVERE, error.toString(), e);
+            throw TransactionIngestorConstraintsException.with(error);
         }
 
         return new TransactionIngestor(transactions);
     }
 
-    private static Transaction parseTransaction(String[] fields) {
+    private static Optional<Transaction> parseTransaction(final ValidationHandler validationHandler, final String[] fields) {
+        NotificationHandler notifier = NotificationHandler.create();
+        validationFields(notifier, fields);
+
+        if (notifier.hasErrors()) {
+            validationHandler.append(notifier);
+            return Optional.empty();
+        }
+
         final String step = fields[0];
         final String type = fields[1];
         final String amount = fields[2];
@@ -60,7 +87,7 @@ public class TransactionIngestor {
         final String isFraud = fields[9];
         final String isFlaggedFraud = fields[10];
 
-        return TransactionFactory.create(
+        return Optional.of(TransactionFactory.create(
                 step,
                 type,
                 amount,
@@ -72,19 +99,24 @@ public class TransactionIngestor {
                 newBalanceDest,
                 isFraud,
                 isFlaggedFraud
-        );
+        ));
     }
 
-    public static TransactionIngestor create(final String fileName) {
-        return create(fileName, DEFAULT_DELIMITER, Boolean.TRUE, null);
+    private static void validationFields(final ValidationHandler validationHandler, final String[] fields) {
+        final var validator = TransacionIngestorValidator.of(validationHandler, fields);
+        validator.validate();
     }
 
-    public static TransactionIngestor create(final String fileName, final Integer limit) {
-        return create(fileName, DEFAULT_DELIMITER, Boolean.TRUE, limit);
+    public static TransactionIngestor create(final ValidationHandler validationHandler, final String fileName) {
+        return create(validationHandler, fileName, DEFAULT_DELIMITER, Boolean.TRUE, null);
     }
 
-    public static TransactionIngestor create(final String fileName, final Boolean skipHeader, final Integer limit) {
-        return create(fileName, DEFAULT_DELIMITER, skipHeader, limit);
+    public static TransactionIngestor create(final ValidationHandler validationHandler, final String fileName, final Integer limit) {
+        return create(validationHandler, fileName, DEFAULT_DELIMITER, Boolean.TRUE, limit);
+    }
+
+    public static TransactionIngestor create(final ValidationHandler validationHandler, final String fileName, final Boolean skipHeader, final Integer limit) {
+        return create(validationHandler, fileName, DEFAULT_DELIMITER, skipHeader, limit);
     }
 
     public List<Transaction> getTransactions() {
