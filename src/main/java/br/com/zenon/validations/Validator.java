@@ -20,7 +20,7 @@ public abstract class Validator {
     protected Boolean isNullOrBlank(final String field, final String fieldValue) {
         var isInvalid = Boolean.FALSE;
         if (fieldValue == null || fieldValue.isBlank()) {
-            this.validationHandler.append(ErrorDetail.of(field, String.format("Field '%s' cannot be null or empty", field)));
+            this.validationHandler.append(ErrorDetail.of(field, String.format("Field '%s' cannot be null or empty", field), this.getClass()));
             isInvalid = Boolean.TRUE;
         }
         return isInvalid;

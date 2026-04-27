@@ -5,6 +5,7 @@ import br.com.zenon.exceptions.ErrorDetail;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class NotificationHandler implements ValidationHandler {
 
@@ -57,6 +58,14 @@ public class NotificationHandler implements ValidationHandler {
     }
 
     @Override
+    public ValidationHandler append(final String field, final String message, final Class<?> source) {
+        if (message != null && !message.isBlank()) {
+            this.append(ErrorDetail.of(field, message, source));
+        }
+        return this;
+    }
+
+    @Override
     public ValidationHandler append(final ValidationHandler anotherHandler) {
         if (anotherHandler != null && anotherHandler.hasErrors()) {
             this.errors.addAll(anotherHandler.getErrors());
@@ -68,4 +77,10 @@ public class NotificationHandler implements ValidationHandler {
     public List<ErrorDetail> getErrors() {
         return Collections.unmodifiableList(this.errors);
     }
+
+    @Override
+    public List<ErrorDetail> getErrors(Predicate<ErrorDetail> filter) {
+        return this.errors.stream().filter(filter).toList();
+    }
+
 }

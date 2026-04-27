@@ -52,7 +52,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (isNullOrBlank("isFlaggedFraud", isFlaggedFraud)) return;
 
         if (!isFlaggedFraud.matches(INTEGER_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("isFlaggedFraud", "Is flagged fraud [%s] must be a valid boolean value".formatted(isFlaggedFraud));
+            this.getValidationHandler().append("isFlaggedFraud", "Is flagged fraud [%s] must be a valid boolean value".formatted(isFlaggedFraud), this.getClass());
         }
     }
 
@@ -61,7 +61,7 @@ public final class TransacionIngestorValidator extends Validator {
 
         // Fraud precisa ser um numero inteiro 0 ou 1 para representar um booleano
         if (!isFraud.matches(INTEGER_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("isFraud", "Is fraud [%s] must be a valid boolean value".formatted(isFraud));
+            this.getValidationHandler().append("isFraud", "Is fraud [%s] must be a valid boolean value".formatted(isFraud), this.getClass());
         }
     }
 
@@ -69,7 +69,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (isNullOrBlank("newBalanceDest", newBalanceDest)) return;
 
         if (!newBalanceDest.matches(DECIMAL_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("newBalanceDest", "New balance destination [%s] must be a valid number".formatted(newBalanceDest));
+            this.getValidationHandler().append("newBalanceDest", "New balance destination [%s] must be a valid number".formatted(newBalanceDest), this.getClass());
         }
     }
 
@@ -77,7 +77,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (isNullOrBlank("oldBalanceDest", oldBalanceDest)) return;
 
         if (!oldBalanceDest.matches(DECIMAL_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("oldBalanceDest", "Old balance destination [%s] must be a valid number".formatted(oldBalanceDest));
+            this.getValidationHandler().append("oldBalanceDest", "Old balance destination [%s] must be a valid number".formatted(oldBalanceDest), this.getClass());
         }
     }
 
@@ -89,7 +89,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (isNullOrBlank("newBalanceOrig", newBalanceOrig)) return;
 
         if (!newBalanceOrig.matches(DECIMAL_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("newBalanceOrig", "New balance origin [%s] must be a valid number".formatted(newBalanceOrig));
+            this.getValidationHandler().append("newBalanceOrig", "New balance origin [%s] must be a valid number".formatted(newBalanceOrig), this.getClass());
         }
     }
 
@@ -97,7 +97,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (this.isNullOrBlank("oldBalanceOrig", oldBalanceOrig)) return;
 
         if (!oldBalanceOrig.matches(DECIMAL_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("oldBalanceOrig", "Old balance origin [%s] must be a valid number".formatted(oldBalanceOrig));
+            this.getValidationHandler().append("oldBalanceOrig", "Old balance origin [%s] must be a valid number".formatted(oldBalanceOrig), this.getClass());
         }
     }
 
@@ -109,8 +109,12 @@ public final class TransacionIngestorValidator extends Validator {
         if (this.isNullOrBlank("step", step)) return;
         //Step precisa ser um número inteiro positivo maior ou igual a 1
         if (!step.matches(INTEGER_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("step", "Step [%s] must be a positive integer".formatted(step));
+            this.getValidationHandler().append("step", "Step [%s] must be a positive integer".formatted(step), this.getClass());
         }
+        if (step.matches(INTEGER_POSITIVE_REGEX_PATTERN) && Integer.parseInt(step) < 1) {
+            this.getValidationHandler().append("step", "Step [%s] must be greater than or equal to 1".formatted(step), this.getClass());
+        }
+
     }
 
     private void checkIfTypeIsValid(final String type) {
@@ -119,7 +123,7 @@ public final class TransacionIngestorValidator extends Validator {
         try {
             TransactionType.valueOf(type);
         } catch (IllegalArgumentException _) {
-            this.getValidationHandler().append("type", "Type [%s] must be one of: %s".formatted(type, Arrays.toString(TransactionType.values())));
+            this.getValidationHandler().append("type", "Type [%s] must be one of: %s".formatted(type, Arrays.toString(TransactionType.values())), this.getClass());
         }
     }
 
@@ -127,7 +131,7 @@ public final class TransacionIngestorValidator extends Validator {
         if (this.isNullOrBlank("amount", amount)) return;
         //Amount precisa ser um número decimal positivo e pode ser zero
         if (!amount.matches(DECIMAL_POSITIVE_REGEX_PATTERN)) {
-            this.getValidationHandler().append("amount", "Amount [%s] must be a positive decimal number or zero".formatted(amount));
+            this.getValidationHandler().append("amount", "Amount [%s] must be a positive decimal number or zero".formatted(amount), this.getClass());
         }
     }
 
