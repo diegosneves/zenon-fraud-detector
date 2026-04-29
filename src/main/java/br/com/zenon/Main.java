@@ -36,6 +36,15 @@ public class Main {
             final int listSize,
             final int displayLimit
     ) {
+        return recoveryTransactionByFile(fileName, listSize, displayLimit, true);
+    }
+
+    private static List<Transaction> recoveryTransactionByFile(
+            final String fileName,
+            final int listSize,
+            final int displayLimit,
+            final boolean errorLog
+    ) {
         try {
             ValidationHandler notificationProcessor = NotificationHandler.create();
             final var ingester = TransactionIngestor.create(notificationProcessor, fileName, listSize);
@@ -44,7 +53,7 @@ public class Main {
 
             if (displayLimit > 0) {
                 transactionRecords.stream().limit(displayLimit).forEach(IO::println);
-                displayResult(ingester, transactionRecords, displayLimit, notificationProcessor);
+                displayResult(ingester, transactionRecords, displayLimit, notificationProcessor, errorLog);
             }
             return transactionRecords;
         } catch (final DomainException e) {
@@ -58,7 +67,8 @@ public class Main {
             final TransactionIngestor ingester,
             final List<Transaction> transactionRecords,
             final int displayLimit,
-            final ValidationHandler notificationProcessor
+            final ValidationHandler notificationProcessor,
+            final boolean errorLog
     ) {
         IO.println("""
                 %n[%,03d] - Total of fraud transactions processed with success
@@ -72,7 +82,7 @@ public class Main {
                 notificationProcessor.getErrors().size()
         ));
 
-        if (notificationProcessor.hasErrors()) {
+        if (notificationProcessor.hasErrors() && errorLog) {
             List<ErrorDetail> processorErrors = notificationProcessor.getErrors();
             if (!processorErrors.isEmpty()) {
                 IO.println("%n[%s] - Errors found during processing:".formatted(processorErrors.size()));
