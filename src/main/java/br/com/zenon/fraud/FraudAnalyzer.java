@@ -10,23 +10,22 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class FraudAnalyzer {
 
     private static final String REPORT_HEADER = " Fraud Analysis Report ";
 
     private final List<Transaction> transactions;
-    private final Predicate<Transaction> filter;
 
-    private FraudAnalyzer(final List<Transaction> transactions, final Predicate<Transaction> filter) {
+    private FraudAnalyzer(final List<Transaction> transactions) {
         this.transactions = transactions;
-        this.filter = filter;
     }
 
     public static FraudAnalyzer of(final List<Transaction> transactions, final Predicate<Transaction> filter) {
         Objects.requireNonNull(transactions, "transactions cannot be null");
         Objects.requireNonNull(filter, "filter cannot be null");
-        return new FraudAnalyzer(transactions, filter);
+        return new FraudAnalyzer(transactions.stream().filter(filter).toList());
     }
 
     private static void generateReportHeader(final int headerWidth) {
@@ -44,9 +43,9 @@ public final class FraudAnalyzer {
         processTotalFraud();
 
         separator(width);
-        processTop3AmountFraud();
+        processTopAmountFraud(3);
         separator(width);
-        processSuspectedOrigCustomer();
+        processSuspectedOrigCustomer(5);
         separator(width);
         processTotalLoss();
         separator(width);
@@ -56,7 +55,6 @@ public final class FraudAnalyzer {
 
     private void processFraudByTransactionType() {
         Map<TransactionType, Long> fraudByType = this.transactions.stream()
-                .filter(this.filter)
                 .collect(Collectors.groupingBy(Transaction::type, Collectors.counting()));
 
         System.out.println("Fraud by transaction type:");
@@ -64,20 +62,18 @@ public final class FraudAnalyzer {
     }
 
     private void processTotalLoss() {
-        this.transactions.stream()
-                .filter(this.filter)
+        BigDecimal calculatedLoss = this.transactions.stream()
                 .map(Transaction::amount)
-                .reduce(BigDecimal::add)
-                .ifPresent(totalLoss -> System.out.printf("Total loss from fraud: $%,.2f%n", totalLoss));
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        System.out.printf("Total loss from fraud: $%,.2f%n", calculatedLoss);
     }
 
-    private void processSuspectedOrigCustomer() {
-        List<String> suspectedCustomers = transactions.stream()
-                .filter(this.filter)
-                .sorted(Comparator.comparing(Transaction::amount).reversed())
+    private void processSuspectedOrigCustomer(final int limit) {
+        List<String> suspectedCustomers = this.sortTransactionsByAmountDesc()
                 .map(transaction -> transaction.origin().name())
                 .distinct()
-                .limit(5)
+                .limit(limit)
                 .toList();
 
         System.out.println("Suspected customers with high fraud activity:");
@@ -87,14 +83,12 @@ public final class FraudAnalyzer {
         );
     }
 
-    private void processTop3AmountFraud() {
-        List<Transaction> top3AmountFraud = transactions.stream()
-                .filter(this.filter)
-                .sorted(Comparator.comparing(Transaction::amount).reversed())
-                .limit(3)
+    private void processTopAmountFraud(final int limit) {
+        List<Transaction> top3AmountFraud = this.sortTransactionsByAmountDesc()
+                .limit(limit)
                 .toList();
 
-        System.out.println("Top 3 fraud transactions by amount:");
+        System.out.printf("Top %d fraud transactions by amount:%n", limit);
         AtomicInteger index = new AtomicInteger(1);
         top3AmountFraud.forEach(transaction ->
                 System.out.printf("%d. $%,.2f%n", index.getAndIncrement(), transaction.amount())
@@ -103,7 +97,12 @@ public final class FraudAnalyzer {
 
 
     private void processTotalFraud() {
-        final var totalFraud = transactions.stream().filter(this.filter).count();
+        final var totalFraud = this.transactions.stream().count();
         System.out.printf("Total fraud transactions: %n%s%n", totalFraud);
+    }
+
+    private Stream<Transaction> sortTransactionsByAmountDesc() {
+        return this.transactions.stream()
+                .sorted(Comparator.comparing(Transaction::amount).reversed());
     }
 }
