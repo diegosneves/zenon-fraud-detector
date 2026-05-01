@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public final class TransacionIngestorValidator extends Validator {
 
-    private static final String DECIMAL_POSITIVE_REGEX_PATTERN = "\\d+(\\.\\d+)?";
+    private static final String DECIMAL_POSITIVE_REGEX_PATTERN = "\\d+(\\.\\d+)?([Ee][+-]?\\d+)?";
     private static final String INTEGER_POSITIVE_REGEX_PATTERN = "\\d+";
 
     private final String[] fields;

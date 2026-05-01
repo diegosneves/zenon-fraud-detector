@@ -10,7 +10,8 @@ public final class TransactionFactory {
 
     private static final String TRUE_STRING = "1";
 
-    private TransactionFactory() {}
+    private TransactionFactory() {
+    }
 
     public static Transaction create(
             final Integer step,
@@ -29,8 +30,8 @@ public final class TransactionFactory {
                 step,
                 type,
                 new BigDecimal(amount.toString()),
-                TransactionCustomer.of(nameOrig, oldBalanceOrig.toString(), newBalanceOrig.toString()),
-                TransactionCustomer.of(nameDest, oldBalanceDest.toString(), newBalanceDest.toString()),
+                TransactionCustomer.of(nameOrig, parseBigDecimal(oldBalanceOrig.toString()), parseBigDecimal(newBalanceOrig.toString())),
+                TransactionCustomer.of(nameDest, parseBigDecimal(oldBalanceDest.toString()), parseBigDecimal(newBalanceDest.toString())),
                 isFraud,
                 isFlaggedFraud
         );
@@ -53,8 +54,8 @@ public final class TransactionFactory {
                 step,
                 type,
                 new BigDecimal(amount),
-                TransactionCustomer.of(nameOrig, oldBalanceOrig, newBalanceOrig),
-                TransactionCustomer.of(nameDest, oldBalanceDest, newBalanceDest),
+                TransactionCustomer.of(nameOrig, parseBigDecimal(oldBalanceOrig), parseBigDecimal(newBalanceOrig)),
+                TransactionCustomer.of(nameDest, parseBigDecimal(oldBalanceDest), parseBigDecimal(newBalanceDest)),
                 isFraud,
                 isFlaggedFraud
         );
@@ -76,14 +77,20 @@ public final class TransactionFactory {
         return Transaction.create(
                 Integer.valueOf(step),
                 TransactionType.valueOf(type),
-                new BigDecimal(amount),
-                TransactionCustomer.of(nameOrig, oldBalanceOrig, newBalanceOrig),
-                TransactionCustomer.of(nameDest, oldBalanceDest, newBalanceDest),
+                parseBigDecimal(amount),
+                TransactionCustomer.of(nameOrig, parseBigDecimal(oldBalanceOrig), parseBigDecimal(newBalanceOrig)),
+                TransactionCustomer.of(nameDest, parseBigDecimal(oldBalanceDest), parseBigDecimal(newBalanceDest)),
                 TRUE_STRING.equals(isFraud),
                 TRUE_STRING.equals(isFlaggedFraud)
         );
     }
 
-
+    private static BigDecimal parseBigDecimal(final String value) {
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException _) {
+            return BigDecimal.valueOf(Double.parseDouble(value)).stripTrailingZeros();
+        }
+    }
 
 }

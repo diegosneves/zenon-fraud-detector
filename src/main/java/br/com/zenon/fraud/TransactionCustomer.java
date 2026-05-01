@@ -10,10 +10,10 @@ public record TransactionCustomer(
 
     public static TransactionCustomer of(
             final String name,
-            final String oldBalance,
-            final String newBalance
+            final BigDecimal oldBalance,
+            final BigDecimal newBalance
     ) {
-        return new TransactionCustomer(name, new BigDecimal(oldBalance), new BigDecimal(newBalance));
+        return new TransactionCustomer(name, oldBalance, newBalance);
     }
 
 }
