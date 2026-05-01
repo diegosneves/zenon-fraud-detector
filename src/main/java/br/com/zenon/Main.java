@@ -4,7 +4,6 @@ package br.com.zenon;
 import br.com.zenon.exceptions.DomainException;
 import br.com.zenon.exceptions.ErrorDetail;
 import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
-import br.com.zenon.fraud.FraudAnalyzer;
 import br.com.zenon.fraud.Transaction;
 import br.com.zenon.fraud.TransactionIngestor;
 import br.com.zenon.fraud.TransactionReport;
@@ -30,14 +29,14 @@ public class Main {
         );
 
 
-        final var loadedTransactions = recoveryTransactionByFile(fileMap.get(1), listSize, displayLimit, true);
-        final var fraudAnalysis = FraudAnalyzer.of(loadedTransactions, Transaction::isFraud);
-        fraudAnalysis.printFraudAnalysis();
+//        final var loadedTransactions = recoveryTransactionByFile(fileMap.get(1), null, displayLimit, true);
+//        final var fraudAnalysis = FraudAnalyzer.of(loadedTransactions, Transaction::isFraud);
+//        fraudAnalysis.printFraudAnalysis();
 
 //        benchmarkListVsMap(loadedTransactions);
 
         final var report = TransactionReport.of(fileMap.get(1));
-        report.printReport();
+        report.generateReport();
 
     }
 

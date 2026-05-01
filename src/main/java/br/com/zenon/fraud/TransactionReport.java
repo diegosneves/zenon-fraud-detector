@@ -2,11 +2,12 @@ package br.com.zenon.fraud;
 
 import br.com.zenon.exceptions.ErrorDetail;
 import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
+import br.com.zenon.fraud.factories.TransactionFactory;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class TransactionReport {
@@ -28,39 +29,47 @@ public class TransactionReport {
     }
 
 
-    public void printReport() {
-        long totalLines = streamTransactionData()
-                .count();
+    public void generateReport() {
+        var statistics = streamTransactionData();
 
-        long totalFraudulent = streamTransactionData()
-                .map(l -> l.split(","))
-                .filter(parts -> parts[9].equals("1"))
-                .count();
-
-        BigDecimal totalAmount = streamTransactionData()
-                .map(l -> l.split(","))
-                .map(parts -> parseBigDecimal(parts[2]))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        IO.println("Total lines in report: %,d".formatted(totalLines));
-        IO.println("Total fraudulent transactions: %,d".formatted(totalFraudulent));
-        IO.println("Total amount of fraudulent transactions: %,.2f".formatted(totalAmount));
+        IO.println("""
+                
+                Total lines in report: %,d
+                Total fraudulent transactions: %,d
+                Total amount of fraudulent transactions: %,.2f
+                """.formatted(
+                statistics.totalTransactions(),
+                statistics.totalFraudulentTransactions(),
+                statistics.totalFraudulentAmount()
+        ));
     }
 
-    private Stream<String> streamTransactionData() {
-        try {
-            return Files.lines(Path.of(this.filePath)).skip(this.skipLines);
+    private StatisticsTransaction streamTransactionData() {
+
+        try (Stream<String> transactionLines = Files.lines(Path.of(this.filePath)).skip(this.skipLines)) {
+            return transactionLines
+                    .map(l -> l.split(","))
+                    .map(this::parseTransaction)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .reduce(
+                            StatisticsTransaction.empty(),
+                            StatisticsTransaction::aggregate,
+                            StatisticsTransaction::merge
+                    );
+
         } catch (IOException e) {
             throw TransactionIngestorConstraintsException.with(ErrorDetail.of("filePath", e.getMessage(), this.getClass()));
         }
     }
 
-    private static BigDecimal parseBigDecimal(final String value) {
-        try {
-            return new BigDecimal(value);
-        } catch (NumberFormatException _) {
-            return BigDecimal.valueOf(Double.parseDouble(value)).stripTrailingZeros();
-        }
+
+    private Optional<ReportTransaction> parseTransaction(final String[] fields) {
+        final String amount = fields[2];
+        final String isFraud = fields[9];
+
+        return Optional.of(TransactionFactory.createReportTransaction(amount, isFraud));
     }
+
 
 }

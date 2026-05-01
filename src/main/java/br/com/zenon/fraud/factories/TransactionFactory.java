@@ -1,6 +1,7 @@
 package br.com.zenon.fraud.factories;
 
 import br.com.zenon.enums.TransactionType;
+import br.com.zenon.fraud.ReportTransaction;
 import br.com.zenon.fraud.Transaction;
 import br.com.zenon.fraud.TransactionCustomer;
 
@@ -91,6 +92,10 @@ public final class TransactionFactory {
         } catch (NumberFormatException _) {
             return BigDecimal.valueOf(Double.parseDouble(value)).stripTrailingZeros();
         }
+    }
+
+    public static ReportTransaction createReportTransaction(final String amount, final String isFraud) {
+        return ReportTransaction.create(parseBigDecimal(amount), TRUE_STRING.equals(isFraud));
     }
 
 }
