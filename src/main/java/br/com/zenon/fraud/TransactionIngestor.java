@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,9 +25,11 @@ public class TransactionIngestor {
     private static final String DEFAULT_DELIMITER = ",";
 
     private final List<Transaction> transactions;
+    private final Long loadTime;
 
-    private TransactionIngestor(final List<Transaction> transactions) {
+    private TransactionIngestor(final List<Transaction> transactions, final Long loadTime) {
         this.transactions = transactions == null ? new ArrayList<>() : transactions;
+        this.loadTime = loadTime;
     }
 
     public static TransactionIngestor create(
@@ -37,6 +40,7 @@ public class TransactionIngestor {
             final Integer limit
     ) {
         List<Transaction> transactions;
+        final Long start = System.nanoTime();
 
         Path filePath = Path.of(fileName);
 
@@ -62,8 +66,8 @@ public class TransactionIngestor {
             logger.log(Level.SEVERE, error.toString(), e);
             throw TransactionIngestorConstraintsException.with(error);
         }
-
-        return new TransactionIngestor(transactions);
+        final Long end = System.nanoTime();
+        return new TransactionIngestor(transactions, TimeUnit.NANOSECONDS.toMillis(end - start));
     }
 
     private static Optional<Transaction> parseTransaction(final ValidationHandler validationHandler, final String[] fields) {
@@ -138,6 +142,10 @@ public class TransactionIngestor {
         return this.transactions.stream()
                 .limit(limit == null ? this.transactions.size() : limit)
                 .toList();
+    }
+
+    public Long getLoadTime() {
+        return this.loadTime;
     }
 
 }
