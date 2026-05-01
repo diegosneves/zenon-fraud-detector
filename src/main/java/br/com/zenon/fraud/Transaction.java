@@ -34,4 +34,11 @@ public record Transaction(
         );
     }
 
+    @Override
+    public String toString() {
+        return String.format(
+                "Transaction{step=%d, type=%s, amount=%,.2f, origin=%s, recipient=%s, isFraud=%b, isFlaggedFraud=%b}",
+                step, type, amount, origin, recipient, isFraud, isFlaggedFraud
+        );
+    }
 }
