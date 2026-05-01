@@ -7,6 +7,7 @@ import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
 import br.com.zenon.fraud.FraudAnalyzer;
 import br.com.zenon.fraud.Transaction;
 import br.com.zenon.fraud.TransactionIngestor;
+import br.com.zenon.fraud.TransactionReport;
 import br.com.zenon.repositories.TransactionListRepository;
 import br.com.zenon.repositories.TransactionMapRepository;
 import br.com.zenon.repositories.TransactionRepository;
@@ -22,7 +23,7 @@ public class Main {
     void main() {
 
         final var displayLimit = 1;
-        final var listSize = 1_000_000;
+        final var listSize = 100_000;
         final var fileMap = Map.of(
                 1, "data/PS_20174392719_1491204439457_log.csv",
                 2, "data/wrong_file.csv"
@@ -33,7 +34,10 @@ public class Main {
         final var fraudAnalysis = FraudAnalyzer.of(loadedTransactions, Transaction::isFraud);
         fraudAnalysis.printFraudAnalysis();
 
-        benchmarkListVsMap(loadedTransactions);
+//        benchmarkListVsMap(loadedTransactions);
+
+        final var report = TransactionReport.of(fileMap.get(1));
+        report.printReport();
 
     }
 
