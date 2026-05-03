@@ -1,6 +1,7 @@
 package br.com.zenon;
 
 
+import br.com.zenon.enums.LocaleType;
 import br.com.zenon.exceptions.DomainException;
 import br.com.zenon.exceptions.ErrorDetail;
 import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
@@ -19,7 +20,10 @@ import java.util.concurrent.TimeUnit;
 
 public class Main {
 
-    void main() {
+    void main(String[] args) {
+
+        final String locale = args.length > 0 ? args[0] : "PT_BR";
+        final LocaleType localeType = LocaleType.valueOf(locale.toUpperCase());
 
         final var displayLimit = 1;
         final var listSize = 100_000;
@@ -35,7 +39,7 @@ public class Main {
 
 //        benchmarkListVsMap(loadedTransactions);
 
-        final var report = TransactionReport.of(fileMap.get(1));
+        final var report = TransactionReport.of(fileMap.get(1), localeType);
         report.generateReport();
 
     }
