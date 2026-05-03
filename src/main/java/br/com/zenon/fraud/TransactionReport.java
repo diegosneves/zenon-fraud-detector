@@ -1,5 +1,6 @@
 package br.com.zenon.fraud;
 
+import br.com.zenon.enums.LocaleType;
 import br.com.zenon.exceptions.ErrorDetail;
 import br.com.zenon.exceptions.TransactionIngestorConstraintsException;
 import br.com.zenon.fraud.factories.TransactionFactory;
@@ -14,18 +15,28 @@ public class TransactionReport {
 
     private final String filePath;
     private final Integer skipLines;
+    private final LocaleType localeType;
 
-    private TransactionReport(final String filePath, final Integer skipLines) {
+    private TransactionReport(final String filePath, final Integer skipLines, final LocaleType localeType) {
         this.filePath = filePath;
         this.skipLines = skipLines;
+        this.localeType = localeType == null ? LocaleType.PT_BR : localeType;
+    }
+
+    public static TransactionReport of(final String filePath, final Boolean hasHeader, final LocaleType localeType) {
+        return new TransactionReport(filePath, hasHeader ? 1 : 0, localeType);
     }
 
     public static TransactionReport of(final String filePath, final Boolean hasHeader) {
-        return new TransactionReport(filePath, hasHeader ? 1 : 0);
+        return new TransactionReport(filePath, hasHeader ? 1 : 0, LocaleType.PT_BR);
     }
 
     public static TransactionReport of(final String filePath) {
         return TransactionReport.of(filePath, true);
+    }
+
+    public static TransactionReport of(final String filePath, final LocaleType localeType) {
+        return TransactionReport.of(filePath, true, localeType);
     }
 
 
@@ -34,13 +45,16 @@ public class TransactionReport {
 
         IO.println("""
                 
-                Total lines in report: %,d
-                Total fraudulent transactions: %,d
-                Total amount of fraudulent transactions: %,.2f
+                %s: %s
+                %s: %s
+                %s: %s
                 """.formatted(
-                statistics.totalTransactions(),
-                statistics.totalFraudulentTransactions(),
-                statistics.totalFraudulentAmount()
+                this.localeType.fetchTranslation("total.lines.in.the.report"),
+                this.localeType.formatNumber(statistics.totalTransactions()),
+                this.localeType.fetchTranslation("total.fraudulent.transactions"),
+                this.localeType.formatNumber(statistics.totalFraudulentTransactions()),
+                this.localeType.fetchTranslation("total.amount.of.fraudulent.transactions"),
+                this.localeType.convertToCurrency(statistics.totalFraudulentAmount(), "USD")
         ));
     }
 
