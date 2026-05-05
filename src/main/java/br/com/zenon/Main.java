@@ -1,6 +1,7 @@
 package br.com.zenon;
 
 
+import br.com.zenon.configs.MySQLDatabaseFactory;
 import br.com.zenon.enums.LocaleType;
 import br.com.zenon.exceptions.DomainException;
 import br.com.zenon.exceptions.ErrorDetail;
@@ -14,6 +15,7 @@ import br.com.zenon.repositories.TransactionRepository;
 import br.com.zenon.validations.handlers.NotificationHandler;
 import br.com.zenon.validations.handlers.ValidationHandler;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +43,10 @@ public class Main {
 
         final var report = TransactionReport.of(fileMap.get(1), localeType);
         report.generateReport();
+
+        Connection connection = MySQLDatabaseFactory.getInstance().getConnection();
+
+        connection.close();
 
     }
 
